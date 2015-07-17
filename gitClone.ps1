@@ -1,5 +1,5 @@
  param (
-    [string]$gitPath = "C:\Program Files (x86)\Git\bin\git.exe",
+	[string]$gitPath = "C:\Program Files (x86)\Git\bin\git.exe",
 	[string]$branchName = "master"
  )
 
