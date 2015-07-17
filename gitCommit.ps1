@@ -1,8 +1,9 @@
  param (
-	[string]$gitPath = "C:\Program Files (x86)\Git\bin\git.exe"
+	[string]$gitPath = "C:\Program Files (x86)\Git\bin\git.exe",
+	[string]$branchName = "master"
  )
 
-  function Log([string]$msg, [string]$status = "NORMAL")
+ function Log([string]$msg, [string]$status = "NORMAL")
  {
     write-host "##teamcity[message text='$msg' status='$status']"
  }
@@ -41,8 +42,8 @@
 
  function CreateLastBuildBranch()
  {
-    Log "create last-build branch"
-    & $gitPath branch --force last-build HEAD
+    Log "create $lastBuildBranch branch"
+    & $gitPath branch --force $lastBuildBranch HEAD
     if ($LASTEXITCODE -ne 0)
     {
         Log "create last build branch failed" "ERROR"
@@ -53,7 +54,7 @@
  function PushToCentralRepo()
  {
     # check path
-    Log "push last-build to central repository"
+    Log "push $lastBuildBranch to central repository"
 	$centralRepo = [string](git config --get remote.origin.url) 
     if ("$centralRepo" -eq "")
     {
@@ -76,21 +77,21 @@
         }
     }
 
-    # delete remote last-build
-	if ($remotes.Contains("last-build") -eq $true)
+    # delete remote $lastBuildBranch
+	if ($remotes.Contains("$lastBuildBranch") -eq $true)
     {
-		Log "delete last-build in remote repository"
-		$args = @("push", "central", ":last-build")
+		Log "delete $lastBuildBranch in remote repository"
+		$args = @("push", "central", ":$($lastBuildBranch)")
 		& $gitPath $args
 		if ($LASTEXITCODE -ne 0)
 		{
-			Log "could delete last-build branch in central repository" "WARNING"
+			Log "could not delete $lastBuildBranch branch in central repository" "WARNING"
 		}
 	}
 
-    # push changes to last-build
-    Log "push last build"
-    $args = @("push", "--force", "central", "last-build:last-build")
+    # push changes to $lastBuildBranch
+    Log "push $lastBuildBranch"
+    $args = @("push", "--force", "central", "$($lastBuildBranch):$($lastBuildBranch)")
     & "$gitPath" $args
     if ($LASTEXITCODE -ne 0)
     {
@@ -109,6 +110,32 @@
     }
  }
 
+############################
+# MAIN PROGRAM STARTS HERE #
+############################
+Log "Branch Name: $branchName"
+Log "Git Path: $gitPath"
+Log "Environment Branch Variable ""BranchName"": $env:BranchName"
+
+#check if there is a branch name parameter
+if ($branchName -ne "master")
+{
+	Log "using Branch ""$branchName"" passed in as script parameter"
+}
+else 
+{
+	if ([string]::IsNullOrEmpty($env:BranchName))
+	{
+		Log "using default branch ""master"""
+	}
+	else 
+	{
+		$branchName = $env:BranchName
+		Log "using branch ""$branchName"" set by build parameter"
+	}
+}
+
+$lastBuildBranch = "$($branchName)_last-build"
 # build number
 $buildNumber = $env:build_number
 # set config details
