@@ -1,5 +1,5 @@
  param (
-	[string]$gitPath = "C:\Program Files (x86)\Git\bin\git.exe",
+    [string]$gitPath = "C:\Program Files (x86)\Git\bin\git.exe",
 	[string]$branchName = "master"
  )
 
@@ -67,6 +67,27 @@ function MergeChanges()
 ############################
 # MAIN PROGRAM STARTS HERE #
 ############################
+Log "Branch Name: $branchName"
+Log "Git Path: $gitPath"
+Log "Environment Branch Variable ""BranchName"": $env:BranchName"
+
+#check if there is a branch name parameter
+if ($branchName -ne "master")
+{
+	Log "using Branch ""$branchName"" passed in as script parameter"
+}
+else 
+{
+	if ([string]::IsNullOrEmpty($env:BranchName))
+	{
+		Log "using default branch ""master"""
+	}
+	else 
+	{
+		$branchName = $env:BranchName
+		Log "using branch ""$branchName"" set by build parameter"
+	}
+}
 
  #fetch changes
 Fetch
